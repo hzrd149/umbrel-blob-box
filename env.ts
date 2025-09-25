@@ -1,4 +1,5 @@
 import { join } from "path";
+import crypto from "crypto";
 
 const DATA_DIR = process.env.DATA_DIR || "./data";
 
@@ -11,6 +12,9 @@ export const CONFIG_DIR =
 export const APP_HIDDEN_SERVICE = process.env.APP_HIDDEN_SERVICE
   ? "http://" + process.env.APP_HIDDEN_SERVICE
   : undefined;
+
+/** Override default admin username */
+export const APP_USERNAME = process.env.APP_USERNAME || "admin";
 
 /** Password for accessing the admin dashboard */
 export const APP_PASSWORD = process.env.APP_PASSWORD;

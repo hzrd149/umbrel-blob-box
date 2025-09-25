@@ -1,9 +1,10 @@
-import blobStorage from "./services/storage.ts";
-import appConfig from "./services/config.ts";
-import { handleBlossomRequest } from "./routes/blossom/index.ts";
-import { withCors } from "./utils/cors.ts";
-import fileBrowser from "./routes/browser/index.tsx";
+import { APP_PASSWORD, APP_USERNAME } from "./env";
 import adminRoutes from "./routes/admin/admin.tsx";
+import { handleBlossomRequest } from "./routes/blossom/index.ts";
+import fileBrowser from "./routes/browser/index.tsx";
+import appConfig from "./services/config.ts";
+import blobStorage from "./services/storage.ts";
+import { withCors } from "./utils/cors.ts";
 
 // Initialize services
 console.log("Starting Blossom server...");
@@ -34,6 +35,9 @@ const server = Bun.serve({
 
 console.log(`Blossom server running on http://localhost:${server.port}`);
 console.log(`Serving blobs from: ${blobStorage.getBlobDir()}`);
+
+// Warn the user if no password is set for admin dashboard
+if (!APP_PASSWORD) console.error("No password set for admin dashboard!");
 
 // Graceful shutdown
 process.on("SIGINT", () => {

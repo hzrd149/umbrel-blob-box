@@ -206,24 +206,24 @@ export async function resetConfig(req: Request): Promise<Response> {
   }
 }
 
-import { withCors } from "../../utils/cors";
+import { withSimpleAuth } from "../../utils/auth";
 
 // Route configuration with CORS applied
 const routes = {
   "/admin": {
-    GET: withCors(adminDashboard),
+    GET: withSimpleAuth()(adminDashboard),
   },
   "/admin/update-settings": {
-    POST: withCors(updateSettings),
+    POST: withSimpleAuth()(updateSettings),
   },
   "/admin/add-whitelist": {
-    POST: withCors(addToWhitelist),
+    POST: withSimpleAuth()(addToWhitelist),
   },
   "/admin/remove-whitelist": {
-    POST: withCors(removeFromWhitelist),
+    POST: withSimpleAuth()(removeFromWhitelist),
   },
   "/admin/reset-config": {
-    POST: withCors(resetConfig),
+    POST: withSimpleAuth()(resetConfig),
   },
 };
 
