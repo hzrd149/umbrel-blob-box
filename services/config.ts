@@ -202,7 +202,18 @@ export class ConfigService {
    * Check if a pubkey is whitelisted
    */
   isWhitelisted(pubkey: string): boolean {
+    // Allow any pubkey if anonymous uploads are enabled
+    if (this.config.allowAnonymous) {
+      return true;
+    }
     return this.config.whitelist.includes(pubkey);
+  }
+
+  /**
+   * Check if anonymous uploads are allowed
+   */
+  isAnonymousAllowed(): boolean {
+    return this.config.allowAnonymous === true;
   }
 
   /**

@@ -1,10 +1,9 @@
 import { APP_PASSWORD } from "./env";
 import adminRoutes from "./routes/admin/admin.tsx";
 import blossomRoutes from "./routes/blossom/index.ts";
-import fileBrowser from "./routes/browser/index.tsx";
+import fileBrowserRoutes from "./routes/browser/index.tsx";
 import appConfig from "./services/config.ts";
 import blobStorage from "./services/storage.ts";
-import { withCors } from "./utils/cors.ts";
 
 // Initialize services
 console.log("Starting Blossom server...");
@@ -27,7 +26,7 @@ const server = Bun.serve({
     "/styles.css": Bun.file("./public/styles.css"),
     ...adminRoutes,
     ...blossomRoutes,
-    "/": withCors(fileBrowser),
+    ...fileBrowserRoutes,
   },
 });
 

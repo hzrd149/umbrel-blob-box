@@ -43,9 +43,7 @@ export function isValidBlossomAuth(
   expectedHashes?: string[],
 ): boolean {
   // Check if it's the correct kind (24242 for Blossom auth)
-  if (event.kind !== 24242) {
-    return false;
-  }
+  if (event.kind !== 24242) return false;
 
   // Check if it has the correct 't' tag
   const tTag = event.tags.find((tag) => tag[0] === "t");
