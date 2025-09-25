@@ -10,6 +10,7 @@
       "request": "launch",
       "name": "Debug",
       "program": "index.ts",
+      "args": ["--hot"],
       "cwd": "${workspaceFolder}",
       "stopOnEntry": false,
       "watchMode": false

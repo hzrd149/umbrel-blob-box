@@ -1,9 +1,11 @@
 import Document from "../components/Document";
 import FileList from "../components/FileList";
 import Breadcrumb from "../components/Breadcrumb";
+import TorInfoBanner from "../components/TorInfoBanner";
 import { join } from "path";
 import { getDirectoryContents, getParentPath } from "../utils/fileSystem";
 import { BackIcon } from "../components/icons";
+import { APP_HIDDEN_SERVICE } from "../env";
 
 interface FileBrowserProps {
   path: string;
@@ -54,6 +56,10 @@ function FileBrowser({ path, files, error }: FileBrowserProps) {
         <h1 class="text-4xl font-bold text-primary mb-4">Blob Browser</h1>
         <Breadcrumb path={path} />
       </div>
+
+      {APP_HIDDEN_SERVICE && !hasParent ? (
+        <TorInfoBanner hiddenServiceUrl={APP_HIDDEN_SERVICE} />
+      ) : null}
 
       {hasParent && (
         <div class="bg-base-100 border border-base-300 rounded-box overflow-hidden">
