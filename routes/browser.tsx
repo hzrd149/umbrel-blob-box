@@ -27,7 +27,7 @@ function FileBrowser({ path, files, error }: FileBrowserProps) {
     return (
       <div class="max-w-6xl mx-auto p-8">
         <div class="mb-8">
-          <h1 class="text-4xl font-bold text-primary mb-4">File Browser</h1>
+          <h1 class="text-4xl font-bold text-primary mb-4">Blob Box Browser</h1>
           <Breadcrumb path={path} />
         </div>
         <div class="alert alert-error">
@@ -53,7 +53,7 @@ function FileBrowser({ path, files, error }: FileBrowserProps) {
   return (
     <div class="max-w-6xl mx-auto p-8">
       <div class="mb-4">
-        <h1 class="text-4xl font-bold text-primary mb-4">Blob Browser</h1>
+        <h1 class="text-4xl font-bold text-primary mb-4">Blob Box Browser</h1>
         <Breadcrumb path={path} />
       </div>
 
