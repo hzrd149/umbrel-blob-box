@@ -1,4 +1,4 @@
-# umbrel-blossom
+# umbrel-blob-box
 
 To install dependencies:
 

@@ -3,9 +3,6 @@ import { createHash } from "crypto";
 import { join, relative } from "path";
 import { existsSync } from "fs";
 import { BLOB_DIR, CACHE_DIR } from "../env.ts";
-import debug from "debug";
-
-const log = debug("storage");
 
 interface FileHashCache {
   [filePath: string]: {
@@ -56,13 +53,15 @@ export class StorageService {
       if (existsSync(this.cacheFile)) {
         const content = await readFile(this.cacheFile, "utf-8");
         this.cache = JSON.parse(content);
-        log(`Loaded cache with ${Object.keys(this.cache).length} entries`);
+        console.info(
+          `Loaded cache with ${Object.keys(this.cache).length} entries`,
+        );
       } else {
-        log("No existing cache found, starting fresh");
+        console.info("No existing cache found, starting fresh");
         this.cache = {};
       }
     } catch (error) {
-      log("Error loading cache:", error);
+      console.error("Error loading cache:", error);
       this.cache = {};
     }
   }
@@ -77,9 +76,11 @@ export class StorageService {
 
       const content = JSON.stringify(this.cache, null, 2);
       await writeFile(this.cacheFile, content, "utf-8");
-      log(`Saved cache with ${Object.keys(this.cache).length} entries`);
+      console.info(
+        `Saved cache with ${Object.keys(this.cache).length} entries`,
+      );
     } catch (error) {
-      log("Error saving cache:", error);
+      console.error("Error saving cache:", error);
       throw error;
     }
   }
@@ -99,7 +100,7 @@ export class StorageService {
         cached.mtime !== stats.mtime ||
         cached.size !== stats.size
       ) {
-        log(`Processing file: ${relativePath}`);
+        console.info(`Processing file: ${relativePath}`);
         const hash = await this.calculateFileHash(filePath);
 
         // Check if this file was moved from another location
@@ -117,7 +118,9 @@ export class StorageService {
           !existsSync(join(this.blobDir, existingEntry[0]))
         ) {
           // Found a stale entry with same hash - this is likely a moved file
-          log(`Detected moved file: ${existingEntry[0]} -> ${relativePath}`);
+          console.info(
+            `Detected moved file: ${existingEntry[0]} -> ${relativePath}`,
+          );
           delete this.cache[existingEntry[0]];
         }
 
@@ -132,7 +135,7 @@ export class StorageService {
 
       return false; // File unchanged
     } catch (error) {
-      log(`Error processing file ${filePath}:`, error);
+      console.error(`Error processing file ${filePath}:`, error);
       return false;
     }
   }
@@ -158,7 +161,7 @@ export class StorageService {
         }
       }
     } catch (error) {
-      log(`Error scanning directory ${dirPath}:`, error);
+      console.error(`Error scanning directory ${dirPath}:`, error);
     }
 
     return files;
@@ -168,16 +171,16 @@ export class StorageService {
    * Perform initial scan of all files
    */
   private async initialScan(): Promise<void> {
-    log(`Starting initial scan of ${this.blobDir}`);
+    console.info(`Starting initial scan of ${this.blobDir}`);
 
     if (!existsSync(this.blobDir)) {
-      log(`BLOB_DIR ${this.blobDir} does not exist, creating it`);
+      console.info(`BLOB_DIR ${this.blobDir} does not exist, creating it`);
       await mkdir(this.blobDir, { recursive: true });
       return;
     }
 
     const files = await this.scanDirectory(this.blobDir);
-    log(`Found ${files.length} files to process`);
+    console.info(`Found ${files.length} files to process`);
 
     let updatedCount = 0;
     for (const file of files) {
@@ -201,7 +204,7 @@ export class StorageService {
       await this.saveCache();
     }
 
-    log(
+    console.info(
       `Initial scan complete: ${updatedCount} files updated, ${removedCount} files removed`,
     );
   }
@@ -218,7 +221,7 @@ export class StorageService {
     const fullPath = join(this.blobDir, filename);
     const relativePath = relative(this.blobDir, filename);
 
-    log(`File change detected: ${eventType} - ${relativePath}`);
+    console.info(`File change detected: ${eventType} - ${relativePath}`);
 
     try {
       if (existsSync(fullPath)) {
@@ -230,7 +233,7 @@ export class StorageService {
           }
         } else if (stats.isDirectory()) {
           // New directory created - scan it for existing files
-          log(`New directory detected: ${relativePath}`);
+          console.info(`New directory detected: ${relativePath}`);
           const files = await this.scanDirectory(fullPath);
           let updatedCount = 0;
           for (const file of files) {
@@ -239,7 +242,7 @@ export class StorageService {
           }
           if (updatedCount > 0) {
             await this.saveCache();
-            log(
+            console.info(
               `Processed ${updatedCount} files in new directory: ${relativePath}`,
             );
           }
@@ -249,7 +252,7 @@ export class StorageService {
         await this.handleDeletion(relativePath);
       }
     } catch (error) {
-      log(`Error handling file change for ${filename}:`, error);
+      console.error(`Error handling file change for ${filename}:`, error);
     }
   }
 
@@ -258,11 +261,11 @@ export class StorageService {
    */
   async start(): Promise<void> {
     if (this.isWatching) {
-      log("Storage service is already running");
+      console.info("Storage service is already running");
       return;
     }
 
-    log("Starting storage service...");
+    console.info("Starting storage service...");
 
     // Load existing cache
     await this.loadCache();
@@ -285,7 +288,7 @@ export class StorageService {
         signal: this.abortController.signal,
       });
 
-      log(`Watching for changes in ${this.blobDir}`);
+      console.info(`Watching for changes in ${this.blobDir}`);
 
       for await (const event of watcher) {
         await this.handleFileChange(event.eventType, event.filename);
@@ -299,12 +302,12 @@ export class StorageService {
       }
     } catch (error) {
       if (error instanceof Error && error.name !== "AbortError") {
-        log("Error in file watcher:", error);
+        console.info("Error in file watcher:", error);
         throw error;
       }
     } finally {
       this.isWatching = false;
-      log("File watching stopped");
+      console.info("File watching stopped");
     }
   }
 
@@ -319,7 +322,7 @@ export class StorageService {
     if (this.cache[relativePath]) {
       delete this.cache[relativePath];
       removedCount++;
-      log(`Removed deleted file from cache: ${relativePath}`);
+      console.info(`Removed deleted file from cache: ${relativePath}`);
     }
 
     // Also remove any files that were inside this path (in case it was a directory)
@@ -330,13 +333,15 @@ export class StorageService {
       if (cachedFile.startsWith(pathPrefix)) {
         delete this.cache[cachedFile];
         removedCount++;
-        log(`Removed deleted file from cache: ${cachedFile}`);
+        console.info(`Removed deleted file from cache: ${cachedFile}`);
       }
     }
 
     if (removedCount > 0) {
       await this.saveCache();
-      log(`Removed ${removedCount} entries from cache due to deletion`);
+      console.info(
+        `Removed ${removedCount} entries from cache due to deletion`,
+      );
     }
   }
 
@@ -352,13 +357,13 @@ export class StorageService {
       if (!existsSync(fullPath)) {
         delete this.cache[cachedFile];
         removedCount++;
-        log(`Removed stale cache entry: ${cachedFile}`);
+        console.info(`Removed stale cache entry: ${cachedFile}`);
       }
     }
 
     if (removedCount > 0) {
       await this.saveCache();
-      log(`Cleaned ${removedCount} stale entries from cache`);
+      console.info(`Cleaned ${removedCount} stale entries from cache`);
     }
   }
 
@@ -371,7 +376,7 @@ export class StorageService {
       this.abortController = null;
     }
     this.isWatching = false;
-    log("Storage service stopped");
+    console.info("Storage service stopped");
   }
 
   /**
