@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "bun run css",
     "test": "xss-scan",
     "css": "tailwindcss -i styles.css -o public/styles.css"
   },

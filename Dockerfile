@@ -23,16 +23,22 @@ COPY . .
 
 # [optional] tests & build
 ENV NODE_ENV=production
-RUN bun test
 RUN bun run build
+RUN bun build --compile index.ts --outfile blossom
 
 # copy production dependencies and source code into final image
 FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=prerelease /usr/src/app/index.ts .
-COPY --from=prerelease /usr/src/app/package.json .
+COPY --from=prerelease /usr/src/app/blossom .
+COPY --from=prerelease /usr/src/app/public public
+
+# Create volume for data and config
+VOLUME /data
+
+# Set environment variables
+ENV DATA_DIR=/data
 
 # run the app
 USER bun
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "run", "index.ts" ]
+ENTRYPOINT [ "./blossom" ]
