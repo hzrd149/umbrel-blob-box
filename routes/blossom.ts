@@ -8,7 +8,6 @@ import {
   createCorsResponse,
   addCorsHeaders,
 } from "../utils/cors.ts";
-import type { BunRequest } from "bun";
 
 /**
  * Parse SHA256 hash from URL path

@@ -1,6 +1,7 @@
 import blobStorage from "./services/storage.ts";
 import { handleBlossomRequest } from "./routes/blossom.ts";
 import { withCors } from "./utils/cors.ts";
+import fileBrowser from "./routes/browser";
 
 // Start the storage service
 console.log("Starting Blossom server...");
@@ -9,9 +10,11 @@ blobStorage.start();
 const server = Bun.serve({
   port: process.env.PORT || 3000,
   routes: {
+    "/styles.css": Bun.file("./public/styles.css"),
     "/:sha256(.+?)": {
       GET: withCors(handleBlossomRequest),
     },
+    "/": withCors(fileBrowser),
   },
 });
 

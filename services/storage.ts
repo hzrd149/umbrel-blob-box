@@ -102,6 +102,25 @@ export class StorageService {
         log(`Processing file: ${relativePath}`);
         const hash = await this.calculateFileHash(filePath);
 
+        // Check if this file was moved from another location
+        // by looking for an existing entry with the same hash and size
+        // but different mtime (indicating a move/copy operation)
+        const existingEntry = Object.entries(this.cache).find(
+          ([path, entry]) =>
+            path !== relativePath &&
+            entry.hash === hash &&
+            entry.size === stats.size,
+        );
+
+        if (
+          existingEntry &&
+          !existsSync(join(this.blobDir, existingEntry[0]))
+        ) {
+          // Found a stale entry with same hash - this is likely a moved file
+          log(`Detected moved file: ${existingEntry[0]} -> ${relativePath}`);
+          delete this.cache[existingEntry[0]];
+        }
+
         this.cache[relativePath] = {
           hash,
           mtime: stats.mtime,
@@ -209,14 +228,25 @@ export class StorageService {
           if (updated) {
             await this.saveCache();
           }
+        } else if (stats.isDirectory()) {
+          // New directory created - scan it for existing files
+          log(`New directory detected: ${relativePath}`);
+          const files = await this.scanDirectory(fullPath);
+          let updatedCount = 0;
+          for (const file of files) {
+            const updated = await this.processFile(file);
+            if (updated) updatedCount++;
+          }
+          if (updatedCount > 0) {
+            await this.saveCache();
+            log(
+              `Processed ${updatedCount} files in new directory: ${relativePath}`,
+            );
+          }
         }
       } else {
-        // File was deleted
-        if (this.cache[relativePath]) {
-          delete this.cache[relativePath];
-          await this.saveCache();
-          log(`Removed deleted file from cache: ${relativePath}`);
-        }
+        // File or directory was deleted
+        await this.handleDeletion(relativePath);
       }
     } catch (error) {
       log(`Error handling file change for ${filename}:`, error);
@@ -259,6 +289,13 @@ export class StorageService {
 
       for await (const event of watcher) {
         await this.handleFileChange(event.eventType, event.filename);
+
+        // Periodically clean stale entries to handle edge cases
+        // where file system events might be missed
+        if (Math.random() < 0.01) {
+          // 1% chance per event
+          setTimeout(() => this.cleanStaleEntries(), 1000);
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.name !== "AbortError") {
@@ -268,6 +305,60 @@ export class StorageService {
     } finally {
       this.isWatching = false;
       log("File watching stopped");
+    }
+  }
+
+  /**
+   * Handle deletion of files or directories
+   */
+  private async handleDeletion(relativePath: string): Promise<void> {
+    let removedCount = 0;
+    const cachedFiles = Object.keys(this.cache);
+
+    // Remove the exact path if it exists
+    if (this.cache[relativePath]) {
+      delete this.cache[relativePath];
+      removedCount++;
+      log(`Removed deleted file from cache: ${relativePath}`);
+    }
+
+    // Also remove any files that were inside this path (in case it was a directory)
+    const pathPrefix = relativePath.endsWith("/")
+      ? relativePath
+      : relativePath + "/";
+    for (const cachedFile of cachedFiles) {
+      if (cachedFile.startsWith(pathPrefix)) {
+        delete this.cache[cachedFile];
+        removedCount++;
+        log(`Removed deleted file from cache: ${cachedFile}`);
+      }
+    }
+
+    if (removedCount > 0) {
+      await this.saveCache();
+      log(`Removed ${removedCount} entries from cache due to deletion`);
+    }
+  }
+
+  /**
+   * Clean up stale cache entries by removing entries that don't exist on disk
+   */
+  private async cleanStaleEntries(): Promise<void> {
+    const cachedFiles = Object.keys(this.cache);
+    let removedCount = 0;
+
+    for (const cachedFile of cachedFiles) {
+      const fullPath = join(this.blobDir, cachedFile);
+      if (!existsSync(fullPath)) {
+        delete this.cache[cachedFile];
+        removedCount++;
+        log(`Removed stale cache entry: ${cachedFile}`);
+      }
+    }
+
+    if (removedCount > 0) {
+      await this.saveCache();
+      log(`Cleaned ${removedCount} stale entries from cache`);
     }
   }
 
@@ -311,9 +402,7 @@ export class StorageService {
     const fullPath = join(this.blobDir, relativePath);
     if (existsSync(fullPath)) {
       const updated = await this.processFile(fullPath);
-      if (updated) {
-        await this.saveCache();
-      }
+      if (updated) await this.saveCache();
     }
   }
 
@@ -321,6 +410,14 @@ export class StorageService {
    * Force refresh of all files
    */
   async refreshAll(): Promise<void> {
+    await this.initialScan();
+  }
+
+  /**
+   * Clean up stale cache entries and refresh
+   */
+  async cleanAndRefresh(): Promise<void> {
+    await this.cleanStaleEntries();
     await this.initialScan();
   }
 
