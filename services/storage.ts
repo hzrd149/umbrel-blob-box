@@ -1,8 +1,16 @@
-import { watch, readdir, stat, readFile, writeFile, mkdir } from "fs/promises";
+import {
+  watch,
+  readdir,
+  stat,
+  readFile,
+  writeFile,
+  mkdir,
+  unlink,
+} from "fs/promises";
 import { createHash } from "crypto";
 import { join, relative } from "path";
 import { existsSync } from "fs";
-import { BLOB_DIR, CONFIG_DIR } from "../env.ts";
+import { BLOB_DIR, BLOSSOM_UPLOADS_FOLDER, CONFIG_DIR } from "../env.ts";
 
 interface FileHashCache {
   [filePath: string]: {
@@ -431,6 +439,101 @@ export class StorageService {
    */
   getBlobDir(): string {
     return this.blobDir;
+  }
+
+  /**
+   * Store a blob in the /blossom-uploads/<pubkey>/ directory structure
+   */
+  async storeBlobForPubkey(
+    pubkey: string,
+    filename: string,
+    data: Uint8Array,
+  ): Promise<{ filePath: string; hash: string }> {
+    const uploadsDir = join(this.blobDir, "blossom-uploads", pubkey);
+
+    // Ensure the directory exists
+    await mkdir(uploadsDir, { recursive: true });
+
+    const filePath = join(uploadsDir, filename);
+
+    // Write the file
+    await writeFile(filePath, data);
+
+    // Calculate hash
+    const hash = createHash("sha256").update(data).digest("hex");
+
+    // Update cache immediately
+    const relativePath = relative(this.blobDir, filePath);
+    const stats = await stat(filePath);
+    this.cache[relativePath] = {
+      hash,
+      mtime: stats.mtime.getTime(),
+      size: stats.size,
+    };
+
+    // Save cache
+    await this.saveCache();
+
+    return { filePath, hash };
+  }
+
+  /**
+   * Delete a blob by its hash
+   */
+  async deleteBlobByHash(hash: string): Promise<boolean> {
+    // Find the file with this hash
+    const allHashes = this.getAllHashes();
+
+    for (const [relativePath, cacheEntry] of Object.entries(allHashes)) {
+      if (cacheEntry.hash === hash) {
+        const fullPath = join(this.blobDir, relativePath);
+        if (existsSync(fullPath)) {
+          try {
+            await unlink(fullPath);
+            delete this.cache[relativePath];
+            await this.saveCache();
+            console.info(`Deleted blob: ${relativePath}`);
+            return true;
+          } catch (error) {
+            console.error(`Error deleting blob ${relativePath}:`, error);
+            return false;
+          }
+        }
+      }
+    }
+
+    return false; // Blob not found
+  }
+
+  /**
+   * List blobs uploaded by a specific pubkey
+   */
+  getBlobsByPubkey(pubkey: string): Array<{
+    relativePath: string;
+    hash: string;
+    size: number;
+    mtime: number;
+  }> {
+    const uploadsPrefix = join(BLOSSOM_UPLOADS_FOLDER, pubkey);
+    const results: Array<{
+      relativePath: string;
+      hash: string;
+      size: number;
+      mtime: number;
+    }> = [];
+
+    for (const [relativePath, cacheEntry] of Object.entries(this.cache)) {
+      if (relativePath.startsWith(uploadsPrefix)) {
+        results.push({
+          relativePath,
+          hash: cacheEntry.hash,
+          size: cacheEntry.size,
+          mtime: cacheEntry.mtime,
+        });
+      }
+    }
+
+    return results.sort((a, b) => b.mtime - a.mtime); // Most recent first
   }
 }
 

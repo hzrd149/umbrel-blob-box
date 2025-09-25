@@ -49,13 +49,12 @@ export function addCorsHeaders(
 export function createCorsErrorResponse(
   message: string,
   status: number,
-  reason?: string,
   additionalHeaders?: Record<string, string>,
 ): Response {
   return new Response(message, {
     status,
     headers: addCorsHeaders({
-      "X-Reason": reason || message,
+      "X-Reason": message,
       ...additionalHeaders,
     }),
   });

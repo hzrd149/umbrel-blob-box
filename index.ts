@@ -1,6 +1,6 @@
-import { APP_PASSWORD, APP_USERNAME } from "./env";
+import { APP_PASSWORD } from "./env";
 import adminRoutes from "./routes/admin/admin.tsx";
-import { handleBlossomRequest } from "./routes/blossom/index.ts";
+import blossomRoutes from "./routes/blossom/index.ts";
 import fileBrowser from "./routes/browser/index.tsx";
 import appConfig from "./services/config.ts";
 import blobStorage from "./services/storage.ts";
@@ -26,9 +26,7 @@ const server = Bun.serve({
   routes: {
     "/styles.css": Bun.file("./public/styles.css"),
     ...adminRoutes,
-    "/:sha256(.+?)": {
-      GET: withCors(handleBlossomRequest),
-    },
+    ...blossomRoutes,
     "/": withCors(fileBrowser),
   },
 });

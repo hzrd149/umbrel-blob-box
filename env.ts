@@ -1,5 +1,4 @@
 import { join } from "path";
-import crypto from "crypto";
 
 const DATA_DIR = process.env.DATA_DIR || "./data";
 
@@ -18,3 +17,7 @@ export const APP_USERNAME = process.env.APP_USERNAME || "admin";
 
 /** Password for accessing the admin dashboard */
 export const APP_PASSWORD = process.env.APP_PASSWORD;
+
+/** Override the default Blossom uploads folder in the blob directory */
+export const BLOSSOM_UPLOADS_FOLDER =
+  process.env.BLOSSOM_UPLOADS_FOLDER || "blossom-uploads";
