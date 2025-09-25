@@ -69,12 +69,17 @@ function FileItem({
       <div class="flex p-2 items-center justify-center w-10 h-10 rounded-lg bg-info/10 text-info">
         <FileIcon />
       </div>
-      <div class="flex-1 min-w-0">
-        <div class="font-semibold text-base-content break-all" safe>
-          {name}
+      <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+        <div class="flex gap-2 overflow-hidden">
+          <div class="font-semibold text-base-content break-all truncate" safe>
+            {name}
+          </div>
+          <div class="text-sm text-base-content/70 ms-auto" safe>
+            {sizeFormatted} • {dateFormatted}
+          </div>
         </div>
-        <div class="text-sm text-base-content/70" safe>
-          {sizeFormatted} • {dateFormatted}
+        <div class="text-sm text-base-content/50 font-mono break-all" safe>
+          {hash}
         </div>
       </div>
     </a>
