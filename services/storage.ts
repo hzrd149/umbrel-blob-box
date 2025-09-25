@@ -246,9 +246,8 @@ export class StorageService {
 
     try {
       // Ensure blob directory exists
-      if (!existsSync(this.blobDir)) {
+      if (!existsSync(this.blobDir))
         await mkdir(this.blobDir, { recursive: true });
-      }
 
       // Start watching for changes
       const watcher = watch(this.blobDir, {
