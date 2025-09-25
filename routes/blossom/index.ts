@@ -1,13 +1,13 @@
 import { join } from "path";
 import { existsSync, createReadStream, statSync } from "fs";
 import mime from "mime";
-import blobStorage from "../services/storage.ts";
+import blobStorage from "../../services/storage.ts";
 import {
   handleCorsPreflightRequest,
   createCorsErrorResponse,
   createCorsResponse,
   addCorsHeaders,
-} from "../utils/cors.ts";
+} from "../../utils/cors.ts";
 
 /**
  * Parse SHA256 hash from URL path

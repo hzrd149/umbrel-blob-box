@@ -1,16 +1,30 @@
 import blobStorage from "./services/storage.ts";
-import { handleBlossomRequest } from "./routes/blossom.ts";
+import appConfig from "./services/config.ts";
+import { handleBlossomRequest } from "./routes/blossom/index.ts";
 import { withCors } from "./utils/cors.ts";
-import fileBrowser from "./routes/browser";
+import fileBrowser from "./routes/browser/index.tsx";
+import adminRoutes from "./routes/admin/admin.tsx";
+
+// Initialize services
+console.log("Starting Blossom server...");
+
+// Initialize configuration service
+try {
+  await appConfig.initialize();
+  console.log("Configuration service initialized successfully");
+} catch (error) {
+  console.error("Failed to initialize configuration service:", error);
+  console.log("Continuing with default configuration...");
+}
 
 // Start the storage service
-console.log("Starting Blossom server...");
 blobStorage.start();
 
 const server = Bun.serve({
   port: process.env.PORT || 3000,
   routes: {
     "/styles.css": Bun.file("./public/styles.css"),
+    ...adminRoutes,
     "/:sha256(.+?)": {
       GET: withCors(handleBlossomRequest),
     },

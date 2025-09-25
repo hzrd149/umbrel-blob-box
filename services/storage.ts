@@ -2,7 +2,7 @@ import { watch, readdir, stat, readFile, writeFile, mkdir } from "fs/promises";
 import { createHash } from "crypto";
 import { join, relative } from "path";
 import { existsSync } from "fs";
-import { BLOB_DIR, CACHE_DIR } from "../env.ts";
+import { BLOB_DIR, CONFIG_DIR } from "../env.ts";
 
 interface FileHashCache {
   [filePath: string]: {
@@ -21,7 +21,7 @@ export class StorageService {
 
   constructor(blobDir: string, cacheDir: string) {
     this.blobDir = blobDir;
-    this.cacheFile = join(cacheDir, "blobs.json");
+    this.cacheFile = join(cacheDir, "cache.json");
   }
 
   /**
@@ -72,7 +72,7 @@ export class StorageService {
   private async saveCache(): Promise<void> {
     try {
       // Ensure cache directory exists
-      await mkdir(CACHE_DIR, { recursive: true });
+      await mkdir(CONFIG_DIR, { recursive: true });
 
       const content = JSON.stringify(this.cache, null, 2);
       await writeFile(this.cacheFile, content, "utf-8");
@@ -435,6 +435,6 @@ export class StorageService {
 }
 
 // Export a singleton instance
-const blobStorage = new StorageService(BLOB_DIR, CACHE_DIR);
+const blobStorage = new StorageService(BLOB_DIR, CONFIG_DIR);
 
 export default blobStorage;

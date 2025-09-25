@@ -1,6 +1,6 @@
 import { join } from "path";
-import { FileIcon, FolderIcon } from "./icons";
-import { APP_HIDDEN_SERVICE } from "../env";
+import { FileIcon, FolderIcon } from "../../../components/icons";
+import { APP_HIDDEN_SERVICE } from "../../../env";
 
 interface FileEntry {
   name: string;

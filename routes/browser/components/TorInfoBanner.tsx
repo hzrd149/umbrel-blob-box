@@ -1,4 +1,4 @@
-import { GlobeAltIcon } from "./icons";
+import { GlobeAltIcon } from "../../../components/icons";
 
 interface TorInfoBannerProps {
   hiddenServiceUrl: string;
