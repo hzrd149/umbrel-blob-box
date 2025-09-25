@@ -1,5 +1,5 @@
 import { join } from "path";
-import { FileIcon, FolderIcon, CopyIcon } from "./icons";
+import { FileIcon, FolderIcon } from "./icons";
 import { APP_HIDDEN_SERVICE } from "../env";
 
 interface FileEntry {
@@ -62,52 +62,44 @@ function FileItem({
   const sizeFormatted = formatFileSize(size);
   const dateFormatted = new Date(mtime).toLocaleDateString();
 
-  const blossomUrl = APP_HIDDEN_SERVICE ? `${APP_HIDDEN_SERVICE}${href}` : null;
-
   return (
-    <div class="relative group">
-      <a
-        href={href}
-        class="flex items-center gap-4 p-4 hover:bg-base-200 transition-colors border-b border-base-300 last:border-b-0"
-      >
-        <div class="flex p-2 items-center justify-center w-10 h-10 rounded-lg bg-info/10 text-info">
-          <FileIcon />
-        </div>
-        <div class="flex-1 flex flex-col gap-1 overflow-hidden">
-          <div class="flex gap-2 overflow-hidden">
-            <div
-              class="font-semibold text-base-content break-all truncate"
-              safe
-            >
-              {name}
-            </div>
-            <div class="text-sm text-base-content/70 ms-auto" safe>
-              {sizeFormatted} • {dateFormatted}
-            </div>
-          </div>
-          <div class="text-sm text-base-content/50 font-mono break-all" safe>
-            {hash}
+    <div class="flex gap-4 p-4 hover:bg-base-200 transition-colors border-b border-base-300 last:border-b-0">
+      <div class="flex p-2 items-center justify-center w-10 h-10 rounded-lg bg-info/10 text-info">
+        <FileIcon />
+      </div>
+      <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+        <div class="flex gap-2 overflow-hidden">
+          <a
+            href={href}
+            class="font-semibold text-base-content break-all truncate hover:text-primary transition-colors"
+            safe
+            target="_blank"
+          >
+            {name}
+          </a>
+          <div class="text-sm text-base-content/70 ms-auto" safe>
+            {sizeFormatted} • {dateFormatted}
           </div>
         </div>
-      </a>
 
-      {blossomUrl && (
-        <button
-          class="absolute bottom-2 right-2 btn btn-sm btn-ghost btn-primary"
-          title="Copy blossom link"
-          onclick={`event.preventDefault(); event.stopPropagation(); navigator.clipboard.writeText('${blossomUrl}').then(() => {
-              const textSpan = event.target.querySelector('.button-text') || event.target.parentElement.querySelector('.button-text');
-              if (textSpan) {
-                const orig = textSpan.textContent;
-                textSpan.textContent = 'Copied!';
-                setTimeout(() => textSpan.textContent = orig, 2000);
-              }
-              console.log('Link copied to clipboard');
-            }).catch(err => console.error('Failed to copy link:', err));`}
-        >
-          <CopyIcon /> <span class="button-text">Copy Link</span>
-        </button>
-      )}
+        <div class="flex gap-2">
+          <code
+            class="text-sm font-mono text-base-content break-all flex-1 select-all bg-base-200 rounded-lg border border-base-300 py-1 px-2"
+            safe
+          >
+            {hash}
+          </code>
+          {APP_HIDDEN_SERVICE && (
+            <a
+              href={new URL(href, APP_HIDDEN_SERVICE).toString()}
+              class="text-sm btn btn-primary btn-sm btm-soft"
+              target="_blank"
+            >
+              Open
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -124,7 +124,7 @@ export default async function fileBrowser(req: Request): Promise<Response> {
 
   return new Response(
     await (
-      <Document title={`File Browser - ${normalizedPath}`}>
+      <Document title={`Blob Box - ${normalizedPath}`}>
         <FileBrowser path={normalizedPath} files={files} error={error} />
       </Document>
     ),
